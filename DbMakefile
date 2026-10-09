@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+# Helper script to automatically append everything to the makefile
+
+declare -a exts=("db" "proto")
+
+# define substitution file names that need to be included explicitly instead of munged through msi
+declare -a exclude=("runtime" "user")
+
+for i in ${exclude[@]}; do
+    sub=$(echo "$i.substitutions")
+    if [[ -s "$sub" ]]; then
+        echo "DB += $sub" >> Makefile
+    fi
+done
+
+echo "" >> Makefile
+
+# add msi generated files
+for i in *.substitutions; do
+    base=$(echo $i | awk -F'.' '{print $1}')
+    if ! [[ ${exclude[*]} =~ "$base" ]]; then
+        echo "DB += ${base}.db" >> Makefile
+    fi
+done
+
+# add db and proto files
+for i in ${exts[@]}; do
+    for j in *.$i; do
+        if [[ -s "$j" ]]; then echo "DB += $j" >> Makefile; fi
+    done
+done
